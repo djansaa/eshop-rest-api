@@ -1,14 +1,22 @@
 ﻿using eshop_rest_api.DTOs;
 using eshop_rest_api.Models;
+using eshop_rest_api.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace eshop_rest_api.Controllers
 {
     [ApiController]
     [Route("products")]
-    public class ProductController : ApiBaseController<ProductController>
+    public class ProductController : ControllerBase
     {
-        public ProductController(ILogger<ProductController> logger) : base(logger) { }
+        private readonly ILogger<ProductController> _logger;
+        private readonly IProductService _svc;
+
+        public ProductController(ILogger<ProductController> logger, IProductService svc)
+        {
+            _logger = logger;
+            _svc = svc;
+        }
 
         [HttpGet]
         public ActionResult<IEnumerable<Product>> Get()
