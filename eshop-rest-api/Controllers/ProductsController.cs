@@ -21,6 +21,13 @@ namespace eshop_rest_api.Controllers
             _svc = svc;
         }
 
+        /// <summary>
+        /// Retrieves a list of all products.
+        /// </summary>
+        /// <remarks>This method returns all available products as a collection of <see
+        /// cref="ProductDTO"/> objects. Each product includes its ID, name, image URI, price, and
+        /// description.</remarks>
+        /// <returns>A collection of <see cref="ProductDTO"/> objects representing the available products.</returns>
         [HttpGet]
         [MapToApiVersion("1.0")]
         [ProducesResponseType(200, Type=typeof(IEnumerable<ProductDTO>))]
@@ -33,9 +40,19 @@ namespace eshop_rest_api.Controllers
             return Ok(products.Select(p => new ProductDTO(p.Id, p.Name, p.ImgUri, p.Price, p.Description)));
         }
 
+        /// <summary>
+        /// Retrieves a paginated list of products.
+        /// </summary>
+        /// <remarks>This method supports pagination by accepting query parameters for the page number and
+        /// page size.  If the specified page exceeds the total number of pages, the last page is returned. Pagination
+        /// metadata includes links to navigate between pages.</remarks>
+        /// <param name="page">The page number to retrieve. Must be 1 or greater. Defaults to 1.</param>
+        /// <param name="pageSize">The number of items per page. Must be 1 or greater. Defaults to 10.</param>
+        /// <returns>A <see cref="PagedDTO{T}"/> containing a collection of <see cref="ProductDTO"/> objects and pagination
+        /// metadata.</returns>
         [HttpGet]
         [MapToApiVersion("2.0")]
-        [ProducesResponseType(200, Type=typeof(IEnumerable<ProductDTO>))]
+        [ProducesResponseType(200, Type=typeof(PagedDTO<ProductDTO>))]
         public async Task<ActionResult<PagedDTO<ProductDTO>>> GetV2([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             // check query filters
@@ -76,6 +93,14 @@ namespace eshop_rest_api.Controllers
             return Ok(new PagedDTO<ProductDTO>(data, meta));
         }
 
+        /// <summary>
+        /// Retrieves a product by its unique identifier.
+        /// </summary>
+        /// <remarks>This method returns a 200 OK response with the product details if the product exists,
+        /// or a 404 Not Found response if no product with the specified <paramref name="id"/> is found.</remarks>
+        /// <param name="id">The unique identifier of the product to retrieve. Must be a positive integer.</param>
+        /// <returns>An <see cref="ActionResult{T}"/> containing a <see cref="ProductDTO"/> if the product is found; otherwise, a
+        /// 404 Not Found response.</returns>
         [HttpGet("{id:int}")]
         [ProducesResponseType(200, Type=typeof(ProductDTO))]
         [ProducesResponseType(404)]
@@ -93,6 +118,16 @@ namespace eshop_rest_api.Controllers
             return Ok(new ProductDTO(product.Id, product.Name, product.ImgUri, product.Price, product.Description));
         }
 
+        /// <summary>
+        /// Updates the description of an existing product.
+        /// </summary>
+        /// <remarks>This method performs a partial update on the product's description. If the product is
+        /// not found, a 404 response is returned. On success, a 200 response is returned with the updated product
+        /// details.</remarks>
+        /// <param name="id">The unique identifier of the product to update. Must be a positive integer.</param>
+        /// <param name="dto">An object containing the new description for the product.</param>
+        /// <returns>An <see cref="ActionResult{T}"/> containing the updated <see cref="ProductDTO"/> if the operation succeeds, 
+        /// or a <see cref="NotFoundResult"/> if no product with the specified <paramref name="id"/> exists.</returns>
         [HttpPatch("{id:int}/description")]
         [ProducesResponseType(200, Type=typeof(ProductDTO))]
         [ProducesResponseType(404)]

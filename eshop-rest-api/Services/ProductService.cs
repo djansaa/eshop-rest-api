@@ -12,6 +12,7 @@ namespace eshop_rest_api.Services
     public class ProductService : IProductService
     {
         private readonly AppDbContext _db;
+
         public ProductService(AppDbContext db)
         {
             _db = db;

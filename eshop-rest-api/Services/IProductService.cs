@@ -11,6 +11,6 @@ namespace eshop_rest_api.Services
     {
         Task<List<Product>> GetAllAsync();
         Task<Product?> GetByIdAsync(int id);
-        Task<Product?> UpdateDescriptionAsync(int id, string description);
+        Task<Product?> UpdateDescriptionAsync(int id, string? description);
     }
 }

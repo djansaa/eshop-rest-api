@@ -18,6 +18,8 @@ namespace eshop_rest_api.Data
         {
             mb.Entity<Product>(e =>
             {
+                e.HasKey(p => p.Id);
+                e.Property(p => p.Id).ValueGeneratedNever();
                 e.Property(p => p.Name).IsRequired();
                 e.Property(p => p.ImgUri).IsRequired();
                 e.Property(p => p.Price).IsRequired();
