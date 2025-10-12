@@ -57,7 +57,7 @@ try
     {
         builder.Services.AddSingleton<IProductService, MockProductService>();
         Log.Information("Registered IProductService -> MockProductService");
-    } 
+    }
     else
     {
         // using real database
@@ -110,11 +110,11 @@ try
 
     app.Run();
 
-} 
+}
 catch (Exception ex)
 {
     Log.Fatal(ex, "Host terminated unexpectedly");
-} 
+}
 finally
 {
     Log.CloseAndFlush();

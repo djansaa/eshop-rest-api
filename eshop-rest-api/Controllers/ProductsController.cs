@@ -30,7 +30,7 @@ namespace eshop_rest_api.Controllers
         /// <returns>A collection of <see cref="ProductDTO"/> objects representing the available products.</returns>
         [HttpGet]
         [MapToApiVersion("1.0")]
-        [ProducesResponseType(200, Type=typeof(IEnumerable<ProductDTO>))]
+        [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDTO>))]
         public async Task<ActionResult<IEnumerable<ProductDTO>>> GetAllV1()
         {
             var products = await _svc.GetAllAsync();
@@ -52,7 +52,7 @@ namespace eshop_rest_api.Controllers
         /// metadata.</returns>
         [HttpGet]
         [MapToApiVersion("2.0")]
-        [ProducesResponseType(200, Type=typeof(PagedDTO<ProductDTO>))]
+        [ProducesResponseType(200, Type = typeof(PagedDTO<ProductDTO>))]
         public async Task<ActionResult<PagedDTO<ProductDTO>>> GetAllV2([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             // check query filters
@@ -102,7 +102,7 @@ namespace eshop_rest_api.Controllers
         /// <returns>An <see cref="ActionResult{T}"/> containing a <see cref="ProductDTO"/> if the product is found; otherwise, a
         /// 404 Not Found response.</returns>
         [HttpGet("{id:int}")]
-        [ProducesResponseType(200, Type=typeof(ProductDTO))]
+        [ProducesResponseType(200, Type = typeof(ProductDTO))]
         [ProducesResponseType(404)]
         public async Task<ActionResult<ProductDTO>> GetById(int id)
         {
@@ -129,7 +129,7 @@ namespace eshop_rest_api.Controllers
         /// <returns>An <see cref="ActionResult{T}"/> containing the updated <see cref="ProductDTO"/> if the operation succeeds, 
         /// or a <see cref="NotFoundResult"/> if no product with the specified <paramref name="id"/> exists.</returns>
         [HttpPatch("{id:int}/description")]
-        [ProducesResponseType(200, Type=typeof(ProductDTO))]
+        [ProducesResponseType(200, Type = typeof(ProductDTO))]
         [ProducesResponseType(404)]
         public async Task<ActionResult<ProductDTO>> UpdateDescription(int id, [FromBody] UpdateProductDescriptionDTO dto)
         {
