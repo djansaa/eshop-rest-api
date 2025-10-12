@@ -24,6 +24,9 @@ namespace eshop_rest_api.Data
                 e.Property(p => p.ImgUri).IsRequired();
                 e.Property(p => p.Price).IsRequired();
             });
+
+            // initial db seed
+            mb.Entity<Product>().HasData(DbSeed.Items);
         }
     }
 }
