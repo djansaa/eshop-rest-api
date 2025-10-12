@@ -1,6 +1,7 @@
 using Asp.Versioning;
 using Asp.Versioning.ApiExplorer;
 using eshop_rest_api.Data;
+using eshop_rest_api.Mock;
 using eshop_rest_api.Services;
 using eshop_rest_api.Swagger;
 using Microsoft.Data.Sqlite;
@@ -19,6 +20,7 @@ try
     // ========================== WEB BUILDER ==========================
 
     var builder = WebApplication.CreateBuilder(args);
+
 
     // register serilog
     builder.Host.UseSerilog((ctx, lc) => lc
@@ -43,17 +45,36 @@ try
 
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen();
-    // configure swagger
     builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
 
-    // db
-    var conn = new SqliteConnection("Data Source=:memory:");
-    conn.Open();
-    builder.Services.AddSingleton(conn);
-    builder.Services.AddDbContext<AppDbContext>((sp, o) => o.UseSqlite(sp.GetRequiredService<SqliteConnection>()));
+    // get mock variable from config
+    bool useMock = builder.Configuration.GetValue<bool>("Data:UseMock");
 
-    // product service
-    builder.Services.AddScoped<IProductService, ProductService>();
+    Log.Information("UseMock = {UseMock}", useMock);
+
+    // using mock data
+    if (useMock)
+    {
+        builder.Services.AddSingleton<IProductService, MockProductService>();
+        Log.Information("Registered IProductService -> MockProductService");
+    } 
+    else
+    {
+        // using real database
+        var cs = builder.Configuration.GetConnectionString("Default") ?? builder.Configuration["ConnectionStrings:Default"];
+
+        // create sqlite db file full path
+        var csb = new SqliteConnectionStringBuilder(cs);
+        var dbPath = Path.Combine(AppContext.BaseDirectory, "Data", Path.GetFileName(csb.DataSource));
+        Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
+        csb.DataSource = dbPath;
+
+        builder.Services.AddDbContext<AppDbContext>(opt => opt.UseSqlite(csb.ToString()));
+        builder.Services.AddScoped<IProductService, ProductService>();
+        Log.Information("Registered IProductService -> ProductService");
+
+        Log.Information("SQLite DB path: {Path}", dbPath);
+    }
 
     // ========================== BUILD APP ==========================
 
@@ -75,12 +96,14 @@ try
     app.UseHttpsRedirection();
     app.UseAuthorization();
 
-    using (var scope = app.Services.CreateScope())
+    if (!useMock)
     {
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        await db.Database.EnsureCreatedAsync();
-        //await db.Database.MigrateAsync();
-        await DbSeed.RunAsync(db);
+        // apply db migrations at startup
+        using (var scope = app.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            await db.Database.MigrateAsync();
+        }
     }
 
     app.MapControllers();
@@ -97,4 +120,5 @@ finally
     Log.CloseAndFlush();
 }
 
+public partial class Program { }
 

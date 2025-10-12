@@ -31,7 +31,7 @@ namespace eshop_rest_api.Controllers
         [HttpGet]
         [MapToApiVersion("1.0")]
         [ProducesResponseType(200, Type=typeof(IEnumerable<ProductDTO>))]
-        public async Task<ActionResult<IEnumerable<ProductDTO>>> GetV1()
+        public async Task<ActionResult<IEnumerable<ProductDTO>>> GetAllV1()
         {
             var products = await _svc.GetAllAsync();
 
@@ -53,7 +53,7 @@ namespace eshop_rest_api.Controllers
         [HttpGet]
         [MapToApiVersion("2.0")]
         [ProducesResponseType(200, Type=typeof(PagedDTO<ProductDTO>))]
-        public async Task<ActionResult<PagedDTO<ProductDTO>>> GetV2([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        public async Task<ActionResult<PagedDTO<ProductDTO>>> GetAllV2([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             // check query filters
             if (page < 1) page = 1;
