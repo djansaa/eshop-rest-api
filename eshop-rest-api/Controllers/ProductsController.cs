@@ -31,9 +31,9 @@ namespace eshop_rest_api.Controllers
         [HttpGet]
         [MapToApiVersion("1.0")]
         [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDTO>))]
-        public async Task<ActionResult<IEnumerable<ProductDTO>>> GetAllV1()
+        public async Task<ActionResult<IEnumerable<ProductDTO>>> GetAllV1(CancellationToken ct)
         {
-            var products = await _svc.GetAllAsync();
+            var products = await _svc.GetAllAsync(ct);
 
             _logger.LogInformation("Returned {Count} products", products.Count);
 
@@ -53,23 +53,15 @@ namespace eshop_rest_api.Controllers
         [HttpGet]
         [MapToApiVersion("2.0")]
         [ProducesResponseType(200, Type = typeof(PagedDTO<ProductDTO>))]
-        public async Task<ActionResult<PagedDTO<ProductDTO>>> GetAllV2([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        public async Task<ActionResult<PagedDTO<ProductDTO>>> GetAllV2(CancellationToken ct, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
-            // check query filters
-            if (page < 1) page = 1;
-            if (pageSize < 1) pageSize = 1;
+            var (items, totalCount) = await _svc.GetPageAsync(page, pageSize, ct);
 
-            // get data
-            var products = await _svc.GetAllAsync();
-
-            // calculate total pages
-            var totalPages = Math.Max(1, (int)Math.Ceiling(products.Count / (double)pageSize));
+            var totalPages = Math.Max(1, (int)Math.Ceiling(totalCount / (double)pageSize));
             if (page > totalPages) page = totalPages;
 
-            // apply pagination
-            var data = products.Skip((page - 1) * pageSize).Take(pageSize).Select(p => new ProductDTO(p.Id, p.Name, p.ImgUri, p.Price, p.Description));
+            var data = items.Select(p => new ProductDTO(p.Id, p.Name, p.ImgUri, p.Price, p.Description));
 
-            // pagination link local methods
             string BasePath() => $"{Request.Scheme}://{Request.Host}{Request.Path}";
             string Link(int p) => QueryHelpers.AddQueryString(BasePath(), new Dictionary<string, string?>
             {
@@ -77,7 +69,6 @@ namespace eshop_rest_api.Controllers
                 ["pageSize"] = pageSize.ToString()
             });
 
-            // prepare metadata
             var links = new PaginationLinksDTO(
                 Self: Link(page),
                 First: Link(1),
@@ -88,8 +79,7 @@ namespace eshop_rest_api.Controllers
 
             var meta = new PaginationDTO(page, pageSize, totalPages, links);
 
-            _logger.LogInformation("Returned {Count} products through pagination of {Page}. page out of {Pages} pages", pageSize, page, totalPages);
-
+            _logger.LogInformation("Returned {Count} products via page {Page} of {Pages}", items.Count, page, totalPages);
             return Ok(new PagedDTO<ProductDTO>(data, meta));
         }
 
@@ -104,9 +94,9 @@ namespace eshop_rest_api.Controllers
         [HttpGet("{id:int}")]
         [ProducesResponseType(200, Type = typeof(ProductDTO))]
         [ProducesResponseType(404)]
-        public async Task<ActionResult<ProductDTO>> GetById(int id)
+        public async Task<ActionResult<ProductDTO>> GetById(int id, CancellationToken ct)
         {
-            var product = await _svc.GetByIdAsync(id);
+            var product = await _svc.GetByIdAsync(id, ct);
 
             if (product is null)
             {
@@ -131,9 +121,9 @@ namespace eshop_rest_api.Controllers
         [HttpPatch("{id:int}/description")]
         [ProducesResponseType(200, Type = typeof(ProductDTO))]
         [ProducesResponseType(404)]
-        public async Task<ActionResult<ProductDTO>> UpdateDescription(int id, [FromBody] UpdateProductDescriptionDTO dto)
+        public async Task<ActionResult<ProductDTO>> UpdateDescription(int id, [FromBody] UpdateProductDescriptionDTO dto, CancellationToken ct)
         {
-            var updatedProduct = await _svc.UpdateDescriptionAsync(id, dto.Description);
+            var updatedProduct = await _svc.UpdateDescriptionAsync(id, dto.Description, ct);
 
             if (updatedProduct is null)
             {

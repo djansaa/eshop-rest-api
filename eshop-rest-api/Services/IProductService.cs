@@ -4,8 +4,9 @@ namespace eshop_rest_api.Services
 {
     public interface IProductService
     {
-        Task<List<Product>> GetAllAsync();
-        Task<Product?> GetByIdAsync(int id);
-        Task<Product?> UpdateDescriptionAsync(int id, string? description);
+        Task<IReadOnlyList<Product>> GetAllAsync(CancellationToken ct);
+        Task<Product?> GetByIdAsync(int id, CancellationToken ct);
+        Task<Product?> UpdateDescriptionAsync(int id, string? description, CancellationToken ct);
+        Task<(IReadOnlyList<Product> Items, int TotalCount)> GetPageAsync(int page, int pageSize, CancellationToken ct);
     }
 }
