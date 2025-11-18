@@ -18,17 +18,7 @@ namespace tests
 
         public EndpointTests(WebApplicationFactory<Program> factory)
         {
-            _client = factory.WithWebHostBuilder(b =>
-            {
-                b.ConfigureAppConfiguration((ctx, cfg) =>
-                {
-                    // use mock data
-                    cfg.AddInMemoryCollection(new Dictionary<string, string?>
-                    {
-                        ["Data:UseMock"] = "true"
-                    });
-                });
-            }).CreateClient();
+            _client = factory.CreateClient();
         }
 
         [Fact]
@@ -75,13 +65,13 @@ namespace tests
         [Fact]
         public async Task UpdateDescription_Successfull()
         {
-            var res = await _client.PatchAsJsonAsync("/api/v1/Products/1/description",
-                new { description = "NEW" });
-            Assert.Equal(HttpStatusCode.OK, res.StatusCode);
+            const int productId = 1;
+            const string newDescription = "NEW";
+            var requestUri = $"/api/v1/Products/{productId}/description";
 
-            var doc = await res.Content.ReadFromJsonAsync<JsonDocument>();
-            Assert.NotNull(doc);
-            Assert.Equal("NEW", doc!.RootElement.GetProperty("description").GetString());
+            var response = await _client.PatchAsJsonAsync(requestUri, new { description = newDescription });
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
     }
 }

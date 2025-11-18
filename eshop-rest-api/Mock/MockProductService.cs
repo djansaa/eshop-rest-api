@@ -33,12 +33,13 @@ namespace eshop_rest_api.Mock
             return Task.FromResult(((IReadOnlyList<Product>)items, total));
         }
 
-        public Task<Product?> UpdateDescriptionAsync(int id, string? description, CancellationToken ct = default)
+        public Task<bool> UpdateDescriptionAsync(int id, string? description, CancellationToken ct = default)
         {
             var p = _db.FirstOrDefault(x => x.Id == id);
-            if (p is null) return Task.FromResult<Product?>(null);
+            if (p is null) return Task.FromResult(false);
+
             p.Description = description;
-            return Task.FromResult<Product?>(p);
+            return Task.FromResult(true);
         }
     }
 }
