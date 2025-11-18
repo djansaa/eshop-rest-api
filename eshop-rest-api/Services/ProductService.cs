@@ -25,16 +25,11 @@ namespace eshop_rest_api.Services
             return _db.Products.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id, ct);
         }
 
-        public async Task<Product?> UpdateDescriptionAsync(int id, string description, CancellationToken ct = default)
+        public async Task<bool> UpdateDescriptionAsync(int id, string description, CancellationToken ct = default)
         {
-            var p = await _db.Products.FirstOrDefaultAsync(p => p.Id == id, ct);
-            if (p is null) return null;
+            var affected = await _db.Products.Where(p => p.Id == id).ExecuteUpdateAsync(id => id.SetProperty(p => p.Description, description), ct);
 
-            p.Description = description;
-            await _db.SaveChangesAsync(ct);
-
-            return p;
-
+            return affected == 1;
         }
 
         public async Task<(IReadOnlyList<Product> Items, int TotalCount)> GetPageAsync(int page, int pageSize, CancellationToken ct = default)

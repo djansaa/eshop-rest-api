@@ -112,27 +112,27 @@ namespace eshop_rest_api.Controllers
         /// Updates the description of an existing product.
         /// </summary>
         /// <remarks>This method performs a partial update on the product's description. If the product is
-        /// not found, a 404 response is returned. On success, a 200 response is returned with the updated product
+        /// not found, a 404 response is returned. On success, a 200 response is returned.
         /// details.</remarks>
         /// <param name="id">The unique identifier of the product to update. Must be a positive integer.</param>
         /// <param name="dto">An object containing the new description for the product.</param>
-        /// <returns>An <see cref="ActionResult{T}"/> containing the updated <see cref="ProductDTO"/> if the operation succeeds, 
+        /// <returns>An <see cref="OkResult"/> if the update is successful,
         /// or a <see cref="NotFoundResult"/> if no product with the specified <paramref name="id"/> exists.</returns>
         [HttpPatch("{id:int}/description")]
         [ProducesResponseType(200, Type = typeof(ProductDTO))]
         [ProducesResponseType(404)]
         public async Task<ActionResult<ProductDTO>> UpdateDescription(int id, [FromBody] UpdateProductDescriptionDTO dto, CancellationToken ct)
         {
-            var updatedProduct = await _svc.UpdateDescriptionAsync(id, dto.Description, ct);
+            var result = await _svc.UpdateDescriptionAsync(id, dto.Description, ct);
 
-            if (updatedProduct is null)
+            if (!result)
             {
                 _logger.LogWarning("UpdateDescription failed: product {ProductId} not found", id);
                 return NotFound();
             }
 
             _logger.LogInformation("Description updated for product {ProductId}", id);
-            return Ok(new ProductDTO(updatedProduct.Id, updatedProduct.Name, updatedProduct.ImgUri, updatedProduct.Price, updatedProduct.Description));
+            return Ok();
         }
     }
 }
