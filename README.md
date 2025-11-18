@@ -42,6 +42,7 @@ dotnet run --project eshop-rest-api
 * Application should be running on ```http:\\localhost:5122``` or ```http:\\localhost:5000```
 
 ## How to Run Tests
+* Set ```Data:UseMock = true``` in config file.
 ```bash
 dotnet test
 ```
