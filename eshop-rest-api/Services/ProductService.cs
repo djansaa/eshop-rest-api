@@ -1,16 +1,19 @@
 ﻿using eshop_rest_api.Data;
 using eshop_rest_api.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 
 namespace eshop_rest_api.Services
 {
     public class ProductService : IProductService
     {
         private readonly AppDbContext _db;
+        private readonly HybridCache _cache;
 
-        public ProductService(AppDbContext db)
+        public ProductService(AppDbContext db, HybridCache cache)
         {
             _db = db;
+            _cache = cache;
         }
 
         public async Task<IReadOnlyList<Product>> GetAllAsync(CancellationToken ct = default)
@@ -20,35 +23,60 @@ namespace eshop_rest_api.Services
             return list;
         }
 
-        public Task<Product?> GetByIdAsync(int id, CancellationToken ct = default)
+        public async Task<Product?> GetByIdAsync(int id, CancellationToken ct = default)
         {
-            return _db.Products.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id, ct);
+            return await _cache.GetOrCreateAsync(
+                key: $"products:id:{id}",
+                factory: async token => await _db.Products.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id, ct),
+                options: new HybridCacheEntryOptions
+                {
+                    Expiration = TimeSpan.FromMinutes(10),
+                    LocalCacheExpiration = TimeSpan.FromMinutes(2),
+                },
+                tags: new[] { "products", $"products:{id}" },
+                cancellationToken: ct);
         }
 
         public async Task<bool> UpdateDescriptionAsync(int id, string description, CancellationToken ct = default)
         {
             var affected = await _db.Products.Where(p => p.Id == id).ExecuteUpdateAsync(id => id.SetProperty(p => p.Description, description), ct);
 
+            // invalidate updated product in cache
+            await _cache.RemoveAsync($"products:id:{id}", ct);
+            await _cache.RemoveByTagAsync("products:list", ct);
+
             return affected == 1;
         }
 
         public async Task<(IReadOnlyList<Product> Items, int TotalCount)> GetPageAsync(int page, int pageSize, CancellationToken ct = default)
         {
+            // normalize page
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 1;
 
-            var query = _db.Products.AsNoTracking();
+            return await _cache.GetOrCreateAsync(
+                key: $"products:list:{page}",
+                factory: async token =>
+                {
+                    var query = _db.Products.AsNoTracking();
 
-            var total = await query.CountAsync(ct);
+                    var total = await query.CountAsync(token);
 
-            // paging in db
-            var items = await query
-                .OrderBy(p => p.Id)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync(ct);
+                    var items = await query
+                        .OrderBy(p => p.Id)
+                        .Skip((page - 1) * pageSize)
+                        .Take(pageSize)
+                        .ToListAsync(token);
 
-            return (items, total);
+                    return ((IReadOnlyList<Product>)items, total);
+                },
+                options: new HybridCacheEntryOptions
+                {
+                    Expiration = TimeSpan.FromMinutes(10),
+                    LocalCacheExpiration = TimeSpan.FromMinutes(2),
+                },
+                tags: new[] { "products", "products:list" },
+                cancellationToken: ct);
         }
     }
 }

@@ -6,6 +6,7 @@ using eshop_rest_api.Services;
 using eshop_rest_api.Swagger;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Options;
 using Serilog;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -46,6 +47,16 @@ try
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen();
     builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
+
+    // add hybrid cache service
+    builder.Services.AddHybridCache(o =>
+    {
+        o.DefaultEntryOptions = new HybridCacheEntryOptions
+        {
+            Expiration = TimeSpan.FromMinutes(5),
+            LocalCacheExpiration = TimeSpan.FromMinutes(1),
+        };
+    });
 
     // get mock variable from config
     bool useMock = builder.Configuration.GetValue<bool>("Data:UseMock");
